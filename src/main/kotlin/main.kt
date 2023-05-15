@@ -54,7 +54,7 @@ fun main() {
     }
 }
 
-fun calculateFee(cardType: String = "vk pay", monthTransferAmount: Int = 0, transferAmount: Int): Int {
+fun calculateFee(cardType: String, monthTransferAmount: Int , transferAmount: Int): Int {
     return if (checkLimits(cardType, monthTransferAmount, transferAmount)) {
         when (cardType) {
             "mastercard", "maestro" -> transferFeeMastercardMaestro(transferAmount, monthTransferAmount)
@@ -85,7 +85,7 @@ fun transferFeeVisaMir(amount: Int): Int {
     }
 }
 
-fun checkLimits(cardType: String = "vk pay", monthTransferAmount: Int = 0, transferAmount: Int): Boolean {
+fun checkLimits(cardType: String , monthTransferAmount: Int , transferAmount: Int): Boolean {
     return when {
         (cardType == "mastercard" || cardType == "maestro"
                 || cardType == "visa" || cardType == "mir")
