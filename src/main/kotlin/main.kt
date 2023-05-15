@@ -1,10 +1,8 @@
-import kotlin.system.exitProcess
+const val CARD_DAY_TRANSFER_LIMIT = 150_000
+const val CARD_MONTH_TRANSFER_LIMIT = 600_000
 
-const val cardDayTransferLimit = 150_000
-const val cardMonthTransferLimit = 600_000
-
-const val vkPayDayTransferLimit = 15000
-const val vkPayMonthTransferLimit = 40_000
+const val VK_PAY_DAY_TRANSFER_LIMIT = 15000
+const val VK_PAY_MONTH_TRANSFER_LIMIT = 40_000
 
 val paymentMethods = arrayOf("mastercard", "maestro", "visa", "mir", "vk pay")
 
@@ -42,11 +40,10 @@ fun main() {
 
             4 -> {
                 if (paymentMethods.contains(cardType)) {
-                    println(
-                        "Сумма перевода с учётом комиссии : ${
-                            calculateFee(cardType, monthTransferAmount, transferAmount)
-                        } рублей."
-                    )
+                    val fee = calculateFee(cardType, monthTransferAmount, transferAmount)
+                    if (fee != 0) {
+                        println("Сумма перевода с учётом комиссии : $fee рублей.")
+                    }
                     cardType = "vk pay"
                     monthTransferAmount = 0
                     transferAmount = 0
@@ -60,31 +57,29 @@ fun main() {
 fun calculateFee(cardType: String = "vk pay", monthTransferAmount: Int = 0, transferAmount: Int): Int {
     return if (checkLimits(cardType, monthTransferAmount, transferAmount)) {
         when (cardType) {
-            "mastercard" -> transferFeeMastercardMaestro(transferAmount)
-            "maestro" -> transferFeeMastercardMaestro(transferAmount)
-            "visa" -> transferFeeVisaMir(transferAmount)
-            "mir" -> transferFeeVisaMir(transferAmount)
+            "mastercard", "maestro" -> transferFeeMastercardMaestro(transferAmount, monthTransferAmount)
+            "visa", "mir" -> transferFeeVisaMir(transferAmount)
             "vk pay" -> transferAmount
             else -> 0
         }
     } else {
         println("Превышены лимиты на перевод\n")
-        exitProcess(-1)
+        0
     }
 }
 
-fun transferFeeMastercardMaestro(amount: Int): Int {
+fun transferFeeMastercardMaestro(amount: Int, monthTransferAmount: Int): Int {
     return when {
-        amount < 75000 -> amount
+        monthTransferAmount + amount < 75000 -> amount
         else -> amount + (amount * 0.006 + 20).toInt()
     }
 }
 
 fun transferFeeVisaMir(amount: Int): Int {
-    if (amount <= 35) {
+    return if (amount <= 35) {
         println("Сумма перевода не должна быть меньше размера комиссии (35 рублей).\n")
-        exitProcess(-1)
-    } else return when {
+        0
+    } else when {
         amount * 0.0075 < 35 -> amount + 35
         else -> amount + (amount * 0.0075).toInt()
     }
@@ -94,12 +89,12 @@ fun checkLimits(cardType: String = "vk pay", monthTransferAmount: Int = 0, trans
     return when {
         (cardType == "mastercard" || cardType == "maestro"
                 || cardType == "visa" || cardType == "mir")
-                && monthTransferAmount < cardMonthTransferLimit
-                && transferAmount < cardDayTransferLimit -> true
+                && transferAmount + monthTransferAmount < CARD_MONTH_TRANSFER_LIMIT
+                && transferAmount < CARD_DAY_TRANSFER_LIMIT -> true
 
         cardType == "vk pay"
-                && monthTransferAmount < vkPayMonthTransferLimit
-                && transferAmount < vkPayDayTransferLimit -> true
+                && transferAmount + monthTransferAmount < VK_PAY_MONTH_TRANSFER_LIMIT
+                && transferAmount < VK_PAY_DAY_TRANSFER_LIMIT -> true
 
         else -> false
     }
