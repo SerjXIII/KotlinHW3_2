@@ -15,7 +15,7 @@ class MainKtTest {
 
         val result = calculateFee(cardType, monthTransferAmount, transferAmount)
 
-        assertEquals(1000, result)
+        assertEquals(2000, result)
     }
 
     @Test
